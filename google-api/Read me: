@@ -1,0 +1,3 @@
+This is a small utility to convert addresses into coordinates and coordinates back to address.
+Uses google maps api, is based on Python. Code is in src
+The user is asked to load the xml which has the apikey, host and addresses. Here the xml is in properties folder.
