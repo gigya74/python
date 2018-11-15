@@ -1,0 +1,8 @@
+<root>
+<GoogleAPIKey></GoogleAPIKey>
+<host>https://maps.googleapis.com/maps/api/geocode/json</host>
+<addresses>
+	<address  name ="Academy	of	Communications	and	Technology	(ACT)	Charter	School" CITY_STATE_ZIP="Chicago,IL 60624" latitude="41.88147" longitude="-87.73380639999999">4319 W. Washington Blvd.</address>
+	<address name ="Chicago	International	Charter	School	– Bucktown Campus" CITY_STATE_ZIP="Chicago,IL 60624" latitude="41.9225411" longitude="-87.6808034">2235 N. Hamilton</address>
+       </addresses>
+</root>
