@@ -10,14 +10,15 @@ instructions to run the application.
 1)unzip the contents in the folder into any directory.
 2)move the sqlite folder [from inside the deliverables folder] into directly under C Drive.
   After this you should see a folder structure c:/sqlite/databases
-3)run the below pip statements:
+  3)unzip the wamp.rar and put the .db file into sqlite/databases folder.Note that this is an empty database.
+4)run the below pip statements:
 
 pip install pandas
 pip install matplotlib
 pip install sqlite3
 
 
-4)run wamp.py script.
+5)run wamp.py script.
 
 optional:
 if you want to query the database, suggest download sqlitestudio.exe from https://sqlitestudio.pl/index.rvt?act=download .
