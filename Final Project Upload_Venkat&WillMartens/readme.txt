@@ -1,3 +1,4 @@
+
 application requirements
 1)it is assumed that python and pip is installed in the system. Else pl install it.
 2)the entire aplication code is in one script [wamp.py] which will be part of the deliverable.
