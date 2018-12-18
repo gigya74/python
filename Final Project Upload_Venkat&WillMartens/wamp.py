@@ -22,7 +22,9 @@ import sqlite3
 import pandas as pd
 import logging
 from matplotlib import style
+import numpy as np
 import matplotlib.pyplot as plt
+
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 from pandas.tools.plotting import table
@@ -39,7 +41,7 @@ ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
 logger.addHandler(ch)
 db_file = "C:\\sqlite\\databases\\wamp.db"
-
+df_txn = ''
 
 # ------------------	FUNCTION DEFINITIONS ------------------------
 
@@ -98,43 +100,13 @@ class StartPage(tk.Frame):
 
         return None
 
-    """ query to get results for chart1"""
-    def getQ1(self):
-        conn = self.create_connection()
-        df_txn = pd.read_sql_query(
-            "select fyear as Year,round(SUM(income_amount) + SUM(refund_amount),1) as NetAmount from transactions "
-            " group by fyear", conn)
-        conn.close()
-        return df_txn
+    """ queries and gets all rows in transactions table"""
+    def getQuery(self):
 
-    """ query to get results for chart2"""
-    def getQ2(self):
+        global df_txn
         conn = self.create_connection()
-        df_txn = pd.read_sql_query(
-            "SELECT fyear, perf_code, SUM(income_amount) + SUM(refund_amount) AS NetAmount FROM transactions  "
-            "GROUP BY fyear,"
-            " perf_code ", conn)
+        df_txn = pd.read_sql_query("select * from transactions", conn)
         conn.close()
-        return df_txn
-
-    """ query to get results for chart3"""
-    def getQ3(self):
-        conn = self.create_connection()
-        df_txn = pd.read_sql_query(
-            "SELECT fyear, price_category, round(SUM(income_amount) + SUM(refund_amount),0) AS Net_Income "
-            "FROM transactions GROUP BY fyear, price_category", conn)
-        conn.close()
-        return df_txn
-
-    """ query to get results for chart4"""
-    def getQ4(self):
-        conn = self.create_connection()
-        df_txn = pd.read_sql_query(
-            "SELECT fyear, price_type, round(SUM(income_amount) + SUM(refund_amount),0) AS Net_Income "
-            "FROM transactions GROUP BY fyear, price_type having round(SUM(income_amount) + SUM(refund_amount),0)"
-            " > 50000", conn)
-        conn.close()
-        return df_txn
 
     """ variable used by the radio buttons to update chart1"""
     colors = [
@@ -152,60 +124,63 @@ class StartPage(tk.Frame):
 
     """ paints chart1"""
     def q1(self):
+        # -----------------------------------------------------------
+        global df_txn
+        df = df_txn.groupby('fyear',as_index=False).agg({'income_amount': np.sum,'refund_amount': np.sum })
+        df.loc[:, 'NetAmount'] = df.loc[:, 'income_amount'].add(df.loc[:, 'refund_amount'])
+        x = df["fyear"].tolist()
+        y = df["NetAmount"].tolist()
+        self.a1.plot(x,y, color=self.var.get())
+        self.a1.set(xlabel='Year', ylabel='Net Amount',title='Net Amount By Year')
+        #--------------------------------------------------------------
 
-        df_txn = self.getQ1()
-        df_txn.plot(x='Year', y='NetAmount', color=self.var.get(), ax=self.a1, legend=False,fontsize=7)
-        #self.a1.set_xlabel("Year")
-        self.a1.set_ylabel("Net Amount")
         self.canvas._tkcanvas.pack()
         self.f1.canvas.draw()
 
         """ paints chart2"""
     def q2(self):
-        df_txn = self.getQ2()
+        global df_txn
         self.f1.delaxes(self.a2)
         self.a2 = self.f1.add_subplot(233)
         ax1 = self.a2
-        self.a2.set_title("Net income per show")
-        index = set(df_txn["fyear"])
-        print(self.selectedYear)
-        res = df_txn[df_txn['fyear'] == self.selectedYear]  # make this dynamic
-        labels = []
-        sizes = []
-        for index, row in res.iterrows():
-            labels.append(row['perf_code'])
-            sizes.append(row['NetAmount'])
-
-        exp = [.15]
-        for i in range(1, len(labels)):
-            exp.append(0)
+        df = df_txn.groupby(['fyear', 'perf_code'],as_index=False).agg({'income_amount': np.mean,'refund_amount': np.mean })
+        df['NetAmount'] = df['income_amount'] + df['refund_amount']
+        index = set(df["fyear"])
+        res = df[df['fyear'] == self.selectedYear]  # make this dynamic
+        labels = res['perf_code'].tolist()
+        sizes = res['NetAmount'].tolist()
+        exp = []
+        for i in range(0, len(labels)):
+            exp.append(.15)
         plt = ax1.pie(sizes, explode=tuple(exp), labels=labels, autopct='%1.1f%%',
                 shadow=True, startangle=90, textprops={'fontsize': 7})
 
         ax1.axis('equal')
-
-
-
         self.canvas._tkcanvas.pack()
         self.f1.canvas.draw()
 
     """ paints chart4"""
     def q4(self):
+        global df_txn
         style.use('ggplot')
-        df_txn = self.getQ4()
 
-        index = set(df_txn["fyear"])
+        df = df_txn.groupby(['fyear', 'price_type'],as_index=False).agg({'income_amount': np.sum, 'refund_amount': np.sum })
+        df['NetAmount'] = df['income_amount'] + df['refund_amount']
+
+        df = df[df['NetAmount'] > 50000]
         data = []
         index1 = []
-        for i in sorted(index):
+        index = set(df["fyear"])
+
+        for i in index:
             index1.append(str(i))
-            res = df_txn[df_txn['fyear'] == i]
+            res = df[df['fyear'] == i]
             res = res.drop('fyear', 1)
 
             d = {}
 
             for index, row in res.iterrows():
-                d[row['price_type']] = row['Net_Income']
+                d[row['price_type']] = row['NetAmount']
 
             data.append(d)
 
@@ -213,32 +188,30 @@ class StartPage(tk.Frame):
         self.a4.set_xlabel("Year")
         self.a4.set_ylabel("Net Amount")
         df.plot(kind='bar', ax=self.a4, fontsize=7)
-
         self.f1.canvas.get_tk_widget().pack()
         self.f1.canvas.draw()
 
     """ paints chart3"""
     def q3(self):
+        global df_txn
         style.use('ggplot')
-        # self.q3
 
-        df_txn = self.getQ3()
+        df = df_txn.groupby(['fyear', 'price_category'], as_index=False).agg(
+            {'income_amount': np.sum, 'refund_amount': np.sum})
+        df['NetAmount'] = df['income_amount'] + df['refund_amount']
+        index1 = set(df["fyear"])
 
-        index = set(df_txn["fyear"])
         data = []
-        index1 = []
-        for i in sorted(index):
-            index1.append(str(i))
-            res = df_txn[df_txn['fyear'] == i]
+        for i in index1:
+            res = df[df['fyear'] == i]
             res = res.drop('fyear', 1)
 
             d = {}
 
             for index, row in res.iterrows():
-                d[row['price_category']] = row['Net_Income']
+                d[row['price_category']] = row['NetAmount']
 
             data.append(d)
-
 
         df = pd.DataFrame(data, index=sorted(index1))
         self.a3.set_xlabel("Year")
@@ -256,6 +229,7 @@ class StartPage(tk.Frame):
 
     """ constructor of StartPage. Screen is prepared here. One figure and 4 subplots , a slider, three radio buttons are added to the screen"""
     def __init__(self, parent, controller):
+        self.getQuery()
         tk.Frame.__init__(self, parent)
         style.use('ggplot')
         selectedYear = 2015
