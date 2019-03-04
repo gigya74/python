@@ -1,0 +1,9 @@
+https://github.com/gavinest/knn_predicting_heart_disease
+
+
+
+logistic :
+https://www.kaggle.com/neisha/heart-disease-prediction-using-logistic-regression
+
+
+eda:https://www.kaggle.com/fabijanbajo/heart-disease-prediction
