@@ -1,0 +1,9 @@
+task accomplished:
+identification of websites.
+indentification and documentation of data to be extracted from websites.
+development of crawler for one website along with database. (shared in a separate mail to get feedback)
+
+To do list with dates
+1)completion of development of crawlers for all websites. 17th-april
+2)Document APIs (data exposed as APIs). 19-April
+3)Develop fron-end to consume the APIs. 25-April

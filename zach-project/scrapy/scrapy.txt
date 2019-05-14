@@ -1,0 +1,76 @@
+import scrapy
+from scrapy import Selector
+#from .vitem import ViatorItem
+from pymongo import MongoClient
+import couchdb
+from scrapy import signals
+from scrapy.xlib.pydispatch import dispatcher
+
+class ViatorSetSpider(scrapy.Spider):
+    name = 'viator'
+    start_urls = ['https://www.viator.com/Paris/d479-ttd']
+
+
+    def __init__(self):
+        dispatcher.connect(self.spider_closed, signals.spider_closed)
+        #connection = MongoClient("localhost",27017)
+        #db = connection["traveldata"]
+        #self.collection = db["webcrawlerdata3b"]
+
+        self.couch = couchdb.Server()
+        self.db = self.couch['webcrawlerdata3b']
+    def parse(self, response):
+        print(response," response")
+
+        #s = response.xpath('// *[ @ id = "productsList"] / div')
+        #print(len(s))
+        #sel = Selector(text=s)
+        #img = response.xpath('// div / div[1] / img').getall()
+        #print(len(img))
+        #img = response.xpath('// *[ @ id = "productName"] / div / div[1] / img').getall()
+        #for i in range(len(img)):
+        #    price = response.xpath('// *[ @ id = "retailPrice'+str(i)+'"] / div[2]/text()').getall()
+            #print(price)
+
+         #   t1 = response.xpath('//*[@id="topTours"]/div/div/div[2]/div/div[1]/div/div['+str(i)+']/text()').getall()
+            #print(t1)
+
+            #print(title)
+        #titles = response.xpath("//div[@class='media-body product-card-body pb-0']").extract()
+        titles = response.xpath("//div[@class='product-card-main-content']").extract()
+
+        print(titles)
+        for t in titles:
+            #item = ViatorItem()
+            #print(t)
+            sel = Selector(text = t)
+            #print(sel.xpath("//div").extract())
+            #print(sel.xpath("//div[@class='font-weight-bold h3 mb-0']").extract())
+            #print(response.css("div::attr('mb-0 h5')").extract())
+            doc = {
+                'img':sel.xpath('//img/@data-src').extract()[0],
+                'title':sel.xpath('//h2/a/text()').extract()[0],
+            #print(sel.xpath('//div[@class="text-body small"]/text()').extract())
+                'price':sel.xpath('//div[@class="font-weight-bold h3 mb-0"]/text()').extract_first()
+            }
+            #yield dict_info
+            #self.collection.insert(doc)
+            self.db.save(doc)
+            #self.collection.close()
+            #print(sel.xpath('//div[@class="mb-0 h5"]/text()').extract())
+        #print(img,names)
+# --- it runs without project and saves in `output.csv` ---
+    #def spider_closed(spider):
+        #print results
+
+    def spider_closed(self, spider):
+        print("closing---------------------------------")
+from scrapy.crawler import CrawlerProcess
+
+c = CrawlerProcess({
+    'USER_AGENT': 'Mozilla/5.0',
+    'FEED_FORMAT': 'json',
+    'FEED_URI': 'output.json',
+})
+c.crawl(ViatorSetSpider)
+c.start()

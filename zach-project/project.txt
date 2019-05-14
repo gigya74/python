@@ -1,0 +1,3 @@
+http://tour-pedia.org/about/doc.html
+https://www.scrapehero.com/scrape-flight-schedules-and-prices-from-expedia/
+https://www.scrapehero.com/how-to-scrape-tripadvisor-com-hotel-details-using-python-and-lxml/
